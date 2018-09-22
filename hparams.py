@@ -80,7 +80,11 @@ def create_hparams(hparams_string=None, verbose=False):
         weight_decay=1e-6,
         grad_clip_thresh=1,
         batch_size=48,
-        mask_padding=False  # set model's padded outputs to padded values
+        mask_padding=False,  # set model's padded outputs to padded values
+
+        # Guided attention
+        use_guided_attention=True,
+        guided_attention_g=100.,
     )
 
     if hparams_string:

@@ -181,7 +181,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
         optimizer = FP16_Optimizer(
             optimizer, dynamic_loss_scale=hparams.dynamic_loss_scaling)
 
-    criterion = Tacotron2Loss()
+    criterion = Tacotron2Loss(hparams)
 
     logger = prepare_directories_and_logger(
         output_directory, log_directory, rank)
