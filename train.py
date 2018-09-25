@@ -79,10 +79,13 @@ def prepare_directories_and_logger(output_directory, log_directory, rank):
 def load_model(hparams):
     has_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if has_cuda else "cpu")
+
     model = Tacotron2(hparams).to(device)
     if hparams.fp16_run:
         model = batchnorm_to_float(model.half())
         model.decoder.attention_layer.score_mask_value = float(finfo('float16').min)
+
+    print("{} Cuda devices", torch.cuda.device_count())
 
     if hparams.distributed_run:
         model = DistributedDataParallel(model)
