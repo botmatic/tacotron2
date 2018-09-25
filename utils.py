@@ -4,8 +4,13 @@ import torch
 
 
 def get_mask_from_lengths(lengths):
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     max_len = torch.max(lengths)
-    ids = torch.arange(0, max_len).long().cuda()
+    ids = torch.arange(0, max_len).long().to(device)
     mask = (ids < lengths.unsqueeze(1)).byte()
     return mask
 
@@ -28,5 +33,9 @@ def load_filepaths_and_text(filename, sort_by_length, split="|"):
 
 
 def to_gpu(x):
-    x = x.contiguous().cuda(async=True)
+    if (torch.cuda.is_available()):
+        x = x.contiguous().cuda(async=True)
+        return torch.autograd.Variable(x)
+
+    x = x.contiguous().cpu()
     return torch.autograd.Variable(x)

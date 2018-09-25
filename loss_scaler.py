@@ -107,8 +107,8 @@ if __name__ == "__main__":
         y_pred = x.mm(w1).clamp(min=0).mm(w2)
         loss = (y_pred - y).pow(2).sum() * loss_scaler.loss_scale
         print('Iter {} loss scale: {}'.format(t, loss_scaler.loss_scale))
-        print('Iter {} scaled loss: {}'.format(t, loss.data[0]))
-        print('Iter {} unscaled loss: {}'.format(t, loss.data[0] / loss_scaler.loss_scale))
+        print('Iter {} scaled loss: {}'.format(t, loss.item()))
+        print('Iter {} unscaled loss: {}'.format(t, loss.item() / loss_scaler.loss_scale))
 
         # Run backprop
         optimizer.zero_grad()

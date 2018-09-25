@@ -6,6 +6,8 @@ from layers import ConvNorm, LinearNorm
 from utils import to_gpu, get_mask_from_lengths
 from fp16_optimizer import fp32_to_fp16, fp16_to_fp32
 
+from tqdm import tqdm
+
 
 class LocationLayer(nn.Module):
     def __init__(self, attention_n_filters, attention_kernel_size,
@@ -56,7 +58,7 @@ class Attention(nn.Module):
 
         processed_query = self.query_layer(query.unsqueeze(1))
         processed_attention_weights = self.location_layer(attention_weights_cat)
-        energies = self.v(F.tanh(
+        energies = self.v(torch.tanh(
             processed_query + processed_attention_weights + processed_memory))
 
         energies = energies.squeeze(-1)
@@ -141,7 +143,7 @@ class Postnet(nn.Module):
 
     def forward(self, x):
         for i in range(len(self.convolutions) - 1):
-            x = self.dropout(F.tanh(self.convolutions[i](x)))
+            x = self.dropout(torch.tanh(self.convolutions[i](x)))
 
         x = self.dropout(self.convolutions[-1](x))
 
@@ -193,7 +195,7 @@ class Encoder(nn.Module):
         return outputs
 
     def inference(self, x):
-        for conv in self.convolutions:
+        for conv in tqdm(self.convolutions):
             x = self.dropout(F.relu(conv(x)))
 
         x = x.transpose(1, 2)
@@ -436,7 +438,7 @@ class Decoder(nn.Module):
             gate_outputs += [gate_output.squeeze(1)]
             alignments += [alignment]
 
-            if F.sigmoid(gate_output.data) > self.gate_threshold:
+            if torch.sigmoid(gate_output.data) > self.gate_threshold:
                 break
             elif len(mel_outputs) == self.max_decoder_steps:
                 print("Warning! Reached max decoder steps")
@@ -533,6 +535,9 @@ class Tacotron2(nn.Module):
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
+
+        print(encoder_outputs)
+        print(mel_outputs.size(), mel_outputs_postnet.size())
 
         outputs = self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])

@@ -170,7 +170,7 @@ class FP16_Optimizer(object):
                 for param in param_group['params']:
                     fp32_params.append(param)
             if clip > 0:
-                return torch.nn.utils.clip_grad_norm(fp32_params, clip)
+                return torch.nn.utils.clip_grad_norm_(fp32_params, clip)
 
     def _copy_params_fp32_to_fp16(self):
         for fp16_group, fp32_group in zip(self.fp16_param_groups, self.fp32_flattened_groups):
