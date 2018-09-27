@@ -54,7 +54,7 @@ def _parallel_wavenet_generate(mels, checkpoint_path):
     # model = build_model().to(device)
 
     print("Load checkpoint from {}".format(checkpoint_path))
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     # checkpoint = torch.load(checkpoint_path, map_location={'cuda:0':'cuda:1'})
     # print("Load checkpoint from {}".format('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth'))
     # checkpoint = torch.load('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth', map_location=device)
@@ -137,10 +137,10 @@ if __name__ == '__main__':
       # mel = spec_from_mel[:, :, :-1]
       # print(spec_from_mel[:, :, :-1].size())
 
-      waveform = _parallel_wavenet_generate((text, mel.data.cpu().numpy()[0]), './parallel_wavenet_vocoder/checkpoint/checkpoint_step000070000_ema.pth')
-      # waveform = griffin_lim(torch.autograd.Variable(
-          # spec_from_mel[:, :, :-1]), taco_stft.stft_fn, 60)
+      #waveform = _parallel_wavenet_generate((text, mel.data.cpu().numpy()[0]), './parallel_wavenet_vocoder/checkpoint/checkpoint_step000070000_ema.pth')
+      waveform = griffin_lim(torch.autograd.Variable(
+          spec_from_mel[:, :, :-1]), taco_stft.stft_fn, 60)
       
       librosa.output.write_wav(
-          filepath, waveform, sr=hparams.sampling_rate)
-          # filepath, waveform[0].data.cpu().numpy(), sr=hparams.sampling_rate)
+        #   filepath, waveform, sr=hparams.sampling_rate)
+          filepath, waveform[0].data.cpu().numpy(), sr=hparams.sampling_rate)
