@@ -31,13 +31,14 @@ class TextMelLoader(torch.utils.data.Dataset):
 
     def get_mel_text_pair(self, audiopath_and_text):
         # separate filename and text
-        audiopath, text = audiopath_and_text[0], audiopath_and_text[1]
-        text = self.get_text(text)
-        mel = self.get_mel(audiopath)
+        # audiopath, text = audiopath_and_text[1], audiopath_and_text[3]
+        text = self.get_text(audiopath_and_text)
+        mel = self.get_mel(audiopath_and_text)
         return (text, mel)
 
-    def get_mel(self, filename):
+    def get_mel(self, audiopath_and_text):
         if not self.load_mel_from_disk:
+            filename = audiopath_and_text[0]
             audio = load_wav_to_torch(filename, self.sampling_rate)
             audio_norm = audio / self.max_wav_value
             audio_norm = audio_norm.unsqueeze(0)
@@ -45,6 +46,7 @@ class TextMelLoader(torch.utils.data.Dataset):
             melspec = self.stft.mel_spectrogram(audio_norm)
             melspec = torch.squeeze(melspec, 0)
         else:
+            filename = audiopath_and_text[0]
             melspec = torch.from_numpy(np.load(filename))
             assert melspec.size(0) == self.stft.n_mel_channels, (
                 'Mel dimension mismatch: given {}, expected {}'.format(
@@ -52,7 +54,8 @@ class TextMelLoader(torch.utils.data.Dataset):
 
         return melspec
 
-    def get_text(self, text):
+    def get_text(self, audiopath_and_text):
+        text = audiopath_and_text[1]
         text_norm = torch.IntTensor(text_to_sequence(text, self.text_cleaners))
         return text_norm
 

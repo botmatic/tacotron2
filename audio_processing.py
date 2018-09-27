@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from scipy.signal import get_window
 import librosa.util as librosa_util
+from tqdm import tqdm
 
 
 def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
@@ -69,7 +70,7 @@ def griffin_lim(magnitudes, stft_fn, n_iters=30):
     angles = torch.autograd.Variable(torch.from_numpy(angles))
     signal = stft_fn.inverse(magnitudes, angles).squeeze(1)
 
-    for i in range(n_iters):
+    for i in tqdm(range(n_iters)):
         _, angles = stft_fn.transform(signal)
         signal = stft_fn.inverse(magnitudes, angles).squeeze(1)
     return signal

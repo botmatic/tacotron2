@@ -54,7 +54,7 @@ def _parallel_wavenet_generate(mels, checkpoint_path):
     # model = build_model().to(device)
 
     print("Load checkpoint from {}".format(checkpoint_path))
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    checkpoint = torch.load(checkpoint_path, map_location=device)
     # checkpoint = torch.load(checkpoint_path, map_location={'cuda:0':'cuda:1'})
     # print("Load checkpoint from {}".format('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth'))
     # checkpoint = torch.load('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth', map_location=device)
