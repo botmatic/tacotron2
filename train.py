@@ -251,8 +251,8 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
                 if rank == 0:
                     print("Validation loss {}: {:9f}  ".format(
                         iteration, reduced_val_loss))
-                    logger.log_validation(
-                        reduced_val_loss, model, y, y_pred, iteration)
+#                    logger.log_validation(
+ #                       reduced_val_loss, model, y, y_pred, iteration)
                     checkpoint_path = os.path.join(
                         output_directory, "checkpoint_{}".format(iteration))
                     save_checkpoint(model, optimizer, learning_rate, iteration,

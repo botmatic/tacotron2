@@ -137,10 +137,9 @@ if __name__ == '__main__':
       # mel = spec_from_mel[:, :, :-1]
       # print(spec_from_mel[:, :, :-1].size())
 
-      waveform = _parallel_wavenet_generate((text, mel.data.cpu().numpy()[0]), './parallel_wavenet_vocoder/checkpoint/checkpoint_step000070000_ema.pth')
-      # waveform = griffin_lim(torch.autograd.Variable(
-          # spec_from_mel[:, :, :-1]), taco_stft.stft_fn, 60)
-      
+#      waveform = _parallel_wavenet_generate((text, mel.data.cpu().numpy()[0]), './parallel_wavenet_vocoder/checkpoint/checkpoint_step000070000_ema.pth')
+      waveform = griffin_lim(torch.autograd.Variable(
+          spec_from_mel[:, :, :-1]), taco_stft.stft_fn, 60)
+
       librosa.output.write_wav(
-          filepath, waveform, sr=hparams.sampling_rate)
-          # filepath, waveform[0].data.cpu().numpy(), sr=hparams.sampling_rate)
+          filepath, waveform[0].data.cpu().numpy(), sr=hparams.sampling_rate)
