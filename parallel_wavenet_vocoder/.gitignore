@@ -3,6 +3,7 @@ pretrained_models
 notebooks
 wavenet_vocoder/version.py
 checkpoints*
+training_data*
 log
 generated
 data
