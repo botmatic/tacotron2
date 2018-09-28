@@ -195,7 +195,7 @@ class Encoder(nn.Module):
         return outputs
 
     def inference(self, x):
-        for conv in tqdm(self.convolutions):
+        for conv in self.convolutions:
             x = self.dropout(F.relu(conv(x)))
 
         x = x.transpose(1, 2)
@@ -536,8 +536,8 @@ class Tacotron2(nn.Module):
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
-        print(encoder_outputs)
-        print(mel_outputs.size(), mel_outputs_postnet.size())
+        # print(encoder_outputs)
+        # print(mel_outputs.size(), mel_outputs_postnet.size())
 
         outputs = self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])

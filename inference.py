@@ -26,18 +26,17 @@ def _plot_data(data, figsize=(16, 4)):
 
 def model(hparams, checkpoint_path):
   m = load_model(hparams)
-  map_location = {"cuda:1": "cuda:0"} if torch.cuda.is_available() else "cpu"
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  # map_location = {"cuda:1": "cuda:0"} if torch.cuda.is_available() else "cpu"
 
   try:
     m = m.module
   except:
     pass
 
-  m.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(checkpoint_path, map_location=map_location)['state_dict'].items()})
+  m.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(checkpoint_path, map_location=device)['state_dict'].items()})
 
   _ = m.eval()
-
-  print(m)
 
   return m
   
@@ -55,8 +54,8 @@ def infer(m, text):
   sequence = _text_to_sequence(text)
 
   mel_outputs, mel_outputs_postnet, _, alignments = m.inference(sequence)
-  _plot_data((mel_outputs.data.cpu().numpy()[0],
-             mel_outputs_postnet.data.cpu().numpy()[0],
-             alignments.data.cpu().numpy()[0].T))
+  # _plot_data((mel_outputs.data.cpu().numpy()[0],
+  #            mel_outputs_postnet.data.cpu().numpy()[0],
+  #            alignments.data.cpu().numpy()[0].T))
 
   return (text, mel_outputs_postnet)
