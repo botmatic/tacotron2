@@ -71,13 +71,14 @@ def _parallel_wavenet_generate(mels, checkpoint_path):
     print("Text to be synthesized: ")
     print(text)
 
-    print(c.shape[1], hparams.num_mels)
     if c.shape[1] != hparams.num_mels:
         c = np.swapaxes(c, 0, 1)
 
-    print(c.shape[1], hparams.num_mels)
-    # Range [0, 4] was used for training Tacotron2 but WaveNet vocoder assumes [0, 1]
+    # print(c.shape[1], hparams.num_mels)
+    # NVIDIA Tacotron uses db values (?) but Wavenet uses amplitude ratio
+    c = 4 * (10 ** ((c - 2) / 20))  # db to ratio scale
     c = np.interp(c, (0, 4), (0, 1))
+    # print(c)
 
     # Generate
     waveform = wavegen(model, c=c, fast=True, tqdm=tqdm)
