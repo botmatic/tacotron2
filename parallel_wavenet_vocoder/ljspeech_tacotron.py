@@ -35,14 +35,19 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
 
 
 def _process_utterance(out_dir, index, wav_path, text, tacotron_model):
+    print("process utterance")
     # Load the audio to a numpy array:
     wav = load_wav(wav_path)
 
+    print("wav loaded")
+
     if hparams.rescaling:
+        print("rescaling")
         wav = wav / np.abs(wav).max() * hparams.rescaling_max
 
     # Mu-law quantize
     if is_mulaw_quantize(hparams.input_type):
+        print("mulaw quantize")
         # [0, quantize_channels)
         out = P.mulaw_quantize(wav, hparams.quantize_channels)
 
@@ -53,11 +58,13 @@ def _process_utterance(out_dir, index, wav_path, text, tacotron_model):
         constant_values = P.mulaw_quantize(0, hparams.quantize_channels)
         out_dtype = np.int16
     elif is_mulaw(hparams.input_type):
+        print("mulaw")
         # [-1, 1]
         out = P.mulaw(wav, hparams.quantize_channels)
         constant_values = P.mulaw(0.0, hparams.quantize_channels)
         out_dtype = np.float32
     else:
+        print("neither mulaw nor mulaw quantize")
         # [-1, 1]
         out = wav
         constant_values = 0.0
@@ -65,6 +72,7 @@ def _process_utterance(out_dir, index, wav_path, text, tacotron_model):
 
     # Compute a mel-scale spectrogram from the trimmed wav:
     # (N, D)
+    print("Going for infer")
     (text, mel_spectogram) = infer(tacotron_model, text)
     mel_spectrogram = mel_spectogram.detach().numpy()[0].astype(np.float32).T
     # lws pads zeros internally before performing stft
