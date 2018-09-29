@@ -31,7 +31,7 @@ import librosa
 
 from .wavenet_vocoder.util import is_mulaw_quantize, is_mulaw, is_raw
 
-import audio
+from .audio import *
 from .hparams import hparams
 
 import multiprocessing
@@ -91,7 +91,7 @@ def wavegen(model, length=None, c=None, g=None, initial_value=None,
                 "Expected 2-dim shape (T, {}) for the conditional feature, but {} was actually given.".format(hparams.cin_channels, c.shape))
             assert c.ndim == 2
         Tc = c.shape[0]
-        upsample_factor = audio.get_hop_size()
+        upsample_factor = get_hop_size()
         # Overwrite length according to feature size
         length = Tc * upsample_factor
         # (Tc, D) -> (Tc', D)
