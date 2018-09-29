@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pylab as plt
 
+from multiprocessing import cpu_count
+
 # %matplotlib inline
 
 
@@ -51,6 +53,7 @@ def _text_to_sequence(text):
 
 
 def infer(m, text):
+  torch.set_num_threads(cpu_count())
   sequence = _text_to_sequence(text)
 
   mel_outputs, mel_outputs_postnet, _, alignments = m.inference(sequence)
