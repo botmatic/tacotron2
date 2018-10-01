@@ -26,11 +26,27 @@ use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 
 def tacotron_model(hparams, checkpoint_path):
+  """
+  Loads a Tacotron model from checkpoint
+  ARGS:
+    hparams: (HParams)
+    checkpoint_path: (string) path to the checkpoint to load
+
+  RETURNS:
+    A loaded, ready to use Tacotron PyTorch model
+  """
   return model(hparams, checkpoint_path)
+
 
 def predict_spectrogram(tacotron_model, text):
   """
   Start a tacotron in inference mode
+  ARGS:
+    tacotron_model: A loaded tacotron pytroch model
+    text: (string) Text to be synthesized
+
+  RETURNS:
+    (string, numpy.NDarray) the text and the spectrogram in a tuple
   """
 
   print("Mel prediction {}".format(text))
@@ -91,6 +107,12 @@ def parallel_wavenet_generate(mels, checkpoint_path, model_type="student"):
 def nvidia_to_mama_mel(hparams, input_mel):
   """Nvidia's Tacotron and Mamah's have different mel outputs,
   Attempts to convert form Nvidia to Mamah's
+  ARGS:
+    hparams: (HParams) Tacotron hparams
+    input_mel: (numpy.NDarray) melspectrogram from NVIDIA tacotron
+
+  RETURNS:
+    (numpy.NDarray) melspectrogram Wavenet compatible
   """
 
   # Nvidia stft function

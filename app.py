@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file
-#from redis import Redis, RedisError
+
 import os
 import io
 from tacotron.hparams import create_hparams
@@ -11,10 +11,6 @@ import torch
 from tacotron_wavenet import tacotron_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
 
 import uuid
-# import socket
-
-# Connect to Redis
-# redis = Redis(host="redis", db=0, socket_connect_timeout=2, socket_timeout=2)
 
 # Utility class to have dot notation for dict
 class dotdict(dict):
@@ -35,6 +31,16 @@ tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
 
 @app.route("/synthesize", methods=["POST"])
 def synthetize():
+    """
+    Route for synthesis
+    Expectes a form-url-encoded form
+
+    FORM:
+        text: the text to synthesis
+        engine: parallel or sequential, wavenet engine to use
+        checkpoint: wavenet checkpoint to use
+    """
+
     # Mel spectrogram generation
     sentence = request.form["text"]
     
@@ -43,6 +49,7 @@ def synthetize():
     mels = nvidia_to_mama_mel(create_hparams(
         "distributed_run=False,mask_padding=False"), mels)
 
+    # Wavenet model loading
     checkpoint_number = request.form["checkpoint"]
     checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '.pth'
     checkpoint_path = os.path.join(PARALLEL_WN_CHECKPOINT_DIR, checkpoint_filename)
@@ -52,11 +59,14 @@ def synthetize():
         wavenet_type = "teacher"
         checkpoint_path = SEQUENTIAL_WN_CHECKPOINT_DIR
 
+    # Waveform generation
     waveform = parallel_wavenet_generate(
         (text, mels), checkpoint_path, wavenet_type)
     from parallel_wavenet_vocoder.hparams import hparams
 
     # write to file
+    # As of now, The only way I know of to get WAV file, is to
+    # write it to disk, then read it again
     filename = str(uuid.uuid4()) + '.wav'
     filepath = os.path.join('.', 'audio_out', filename)
 
