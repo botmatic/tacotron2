@@ -6,4 +6,4 @@ checkpoint/
 __pycache__
 .DS_Store
 20180510_mixture_lj_checkpoint_step000320000_ema.*
-training_data/**/*
+tacotron/training_data/**/*

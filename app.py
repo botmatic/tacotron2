@@ -2,11 +2,13 @@ from flask import Flask, request, send_file
 #from redis import Redis, RedisError
 import os
 import io
-from hparams import create_hparams
-from inference import infer, model
+from tacotron.hparams import create_hparams
+from tacotron.inference import infer, model
 import librosa.display
 import numpy as np
 import torch
+
+from tacotron_wavenet import tacotron_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
 
 import uuid
 # import socket
@@ -24,95 +26,50 @@ class dotdict(dict):
 app = Flask(__name__)
 
 
-def _parallel_wavenet_generate(mels, checkpoint_path):
-    print("Parallel wavenet generate")
-    # Waveform synthesis by wavenet
-    # Setup WaveNet vocoder hparams
-    from parallel_wavenet_vocoder.hparams import hparams
-    with open('./parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.json') as f:
-        hparams.parse_json(f.read())
+TACOTRON_CHECKPOINT = './output/checkpoint_15500'
+PARALLEL_WN_CHECKPOINT_DIR = './parallel_wavenet_vocoder/checkpoint'
+SEQUENTIAL_WN_CHECKPOINT_DIR = './parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth'
 
-    # Setup WaveNet vocoder
-    from parallel_wavenet_vocoder.train_student import build_model
-    from parallel_wavenet_vocoder.synthesis_student import wavegen
-    from parallel_wavenet_vocoder.hparams import hparams
-    import torch
+tactron_hparams = create_hparams()
+tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
 
-    use_cuda = torch.cuda.is_available()
-    device_type = "cuda" if use_cuda else "cpu"
-    device = torch.device(device_type)
-
-    model = build_model(name="student").to(device)
-    # model = build_model().to(device)
-
-    print("Load checkpoint from {}".format(checkpoint_path))
-    checkpoint = torch.load(checkpoint_path, map_location=device)
-    # checkpoint = torch.load(checkpoint_path, map_location={'cuda:0':'cuda:1'})
-    # print("Load checkpoint from {}".format('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth'))
-    # checkpoint = torch.load('./wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth', map_location=device)
-    state_dict = checkpoint["state_dict"]
-
-    model.load_state_dict(state_dict)
-
-    from glob import glob
-    from tqdm import tqdm
-    
-
-    print("List of texts to be synthesized")
-    for idx, (text,_) in enumerate(mels):
-        print(idx, text)
-
-    waveforms = []
-
-    for idx, (text, c) in enumerate(mels):
-        print("\n", idx, text)
-        print(c.shape[1], hparams.num_mels)
-        if c.shape[1] != hparams.num_mels:
-            c = np.swapaxes(c, 0, 1)
-
-        print(c.shape[1], hparams.num_mels)
-        # Range [0, 4] was used for training Tacotron2 but WaveNet vocoder assumes [0, 1]
-        c = np.interp(c, (0, 4), (0, 1))
-        
-        # Generate
-        waveform = wavegen(model, c=c, fast=True, tqdm=tqdm)
-        
-        waveforms.append(waveform)
-    
-    return waveforms
-
-@app.route("/", methods=["POST"])
+@app.route("/synthesize", methods=["POST"])
 def synthetize():
     # Mel spectrogram generation
-    hparams = create_hparams()
     sentence = request.form["text"]
-    m = model(hparams, './output/checkpoint_500')
-    mels = infer(m, sentence)
+    
+    (text, mels) = predict_spectrogram(tacotron_m, sentence)
+
+    mels = nvidia_to_mama_mel(create_hparams(
+        "distributed_run=False,mask_padding=False"), mels)
 
     checkpoint_number = request.form["checkpoint"]
-    checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '_ema.pth'
-    checkpoint_path = os.path.join('.', 'parallel_wavenet_vocoder', 'checkpoint', checkpoint_filename)
+    checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '.pth'
+    checkpoint_path = os.path.join(PARALLEL_WN_CHECKPOINT_DIR, checkpoint_filename)
 
-    waveforms = _parallel_wavenet_generate([mels], checkpoint_path)
+    wavenet_type = "student"
+    if request.form["engine"] == "sequential":
+        wavenet_type = "teacher"
+        checkpoint_path = SEQUENTIAL_WN_CHECKPOINT_DIR
+
+    waveform = parallel_wavenet_generate(
+        (text, mels), checkpoint_path, wavenet_type)
     from parallel_wavenet_vocoder.hparams import hparams
 
-    for waveform in waveforms:
-        # write to file
-        filename = str(uuid.uuid4()) + '.wav'
-        filepath = os.path.join('.', 'audio_out', filename)
+    # write to file
+    filename = str(uuid.uuid4()) + '.wav'
+    filepath = os.path.join('.', 'audio_out', filename)
 
-        from scipy.io import wavfile
-        import librosa
-        librosa.output.write_wav(filepath, waveform, sr=hparams.sample_rate)
-        # wavfile.write(filepath, hparams.sample_rate, waveform)
-        
-        wav_file = open(filepath, "rb")
-        wav_bytes = io.BytesIO(wav_file.read())
-        wav_file.close()
+    import librosa
+    librosa.output.write_wav(filepath, waveform, sr=hparams.sample_rate)
+    
+    wav_file = open(filepath, "rb")
+    wav_bytes = io.BytesIO(wav_file.read())
+    wav_file.close()
 
-        return send_file(wav_bytes,
-                     attachment_filename=filename,
-                     mimetype='audio/wav')
+    return send_file(wav_bytes,
+                    attachment_filename=filename,
+                    mimetype='audio/wav')
 
 
 def _load_ljspeech():

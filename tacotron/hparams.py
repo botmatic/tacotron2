@@ -1,5 +1,5 @@
 import tensorflow as tf
-from text import symbols
+from .text import symbols
 
 
 def create_hparams(hparams_string=None, verbose=False):
@@ -40,6 +40,21 @@ def create_hparams(hparams_string=None, verbose=False):
         n_mel_channels=80,
         mel_fmin=0.0,
         mel_fmax=None,  # if None, half the sampling rate
+        use_lws=True,
+
+        griffin_lim_iters=60,
+        power = 1.1,
+
+       	signal_normalization=True,
+        # Only relevant if mel_normalization = True
+        allow_clipping_in_normalization=True,
+        symmetric_mels=False,  # Whether to scale the data to be symmetric around 0
+        # max absolute value of data. If symmetric, data will be [-max, max] else [0, max]
+        max_abs_value=4.,
+
+        min_level_db=- 100,
+	    ref_level_db=20,
+
 
         ################################
         # Model Parameters             #

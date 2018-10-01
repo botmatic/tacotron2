@@ -56,6 +56,7 @@ if __name__ == "__main__":
 
     print("Sampling frequency: {}".format(hparams.sample_rate))
 
-    assert name in ["cmu_arctic", "ljspeech", "parallel_wavenet_vocoder.ljspeech_tacotron", "librivox", "jsut"]
+    assert name in ["cmu_arctic", "parallel_wavenet_vocoder.ljspeech",
+                    "parallel_wavenet_vocoder.ljspeech_tacotron", "librivox", "jsut"]
     mod = importlib.import_module(name)
     preprocess(mod, in_dir, out_dir, num_workers)

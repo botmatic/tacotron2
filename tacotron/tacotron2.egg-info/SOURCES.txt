@@ -1,0 +1,10 @@
+tacotron2.egg-info/PKG-INFO
+tacotron2.egg-info/SOURCES.txt
+tacotron2.egg-info/dependency_links.txt
+tacotron2.egg-info/requires.txt
+tacotron2.egg-info/top_level.txt
+text/__init__.py
+text/cleaners.py
+text/cmudict.py
+text/numbers.py
+text/symbols.py

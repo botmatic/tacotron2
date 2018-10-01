@@ -117,6 +117,8 @@ def wavegen(model, length=None, c=None, g=None, initial_value=None,
     else:
         initial_input = torch.zeros(1, 1, 1).fill_(initial_value)
 
+    print('initial_input', initial_input)
+
     g = None if g is None else torch.LongTensor([g])
 
     # Transform data to GPU
@@ -125,6 +127,7 @@ def wavegen(model, length=None, c=None, g=None, initial_value=None,
     c = None if c is None else c.to(device)
 
     with torch.no_grad():
+        print(c.shape)
         y_hat = model.incremental_forward(
             initial_input, c=c, g=g, T=length, tqdm=tqdm, softmax=True, quantize=True,
             log_scale_min=hparams.log_scale_min)
@@ -172,6 +175,7 @@ if __name__ == "__main__":
     if conditional_path is not None:
         wav_id = conditional_path.split("/")[-1].split('.')[0].replace("mel", "syn_t")
         c = np.load(conditional_path)
+        print(c.shape)
         if c.shape[1] != hparams.num_mels:
             np.swapaxes(c, 0, 1)
         if max_abs_value > 0:
@@ -184,7 +188,7 @@ if __name__ == "__main__":
         c = None
         wav_id = '000'
 
-    from train import build_model
+    from .train import build_model
 
     # Model
     model = build_model().to(device)

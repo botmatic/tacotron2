@@ -1,10 +1,9 @@
-__package__ = "preprocess"
-
-from data_utils import TextMelLoader
-from hparams import create_hparams
+from tacotron.data_utils import TextMelLoader
+from tacotron.hparams import create_hparams
 import numpy as np
+from tacotron.preprocessor import preprocessor
 
-from text import sequence_to_text
+from tacotron.text import sequence_to_text
 
 import os.path as path
 
@@ -16,15 +15,13 @@ def save_mels(files, file_to_write):
 
   with tqdm(total=len(melLoader.audiopaths_and_text)) as pbar:
     for idx, audiopath_and_text in enumerate(melLoader.audiopaths_and_text):
-      (_, mel) = melLoader[idx]
-
       text = audiopath_and_text[1]
-      print(idx, text)
-
       audiopath = path.splitext(path.basename(audiopath_and_text[0]))[0]
 
+      (name, text, mel) = preprocessor._process_utterance(hparams, audiopath_and_text[0], audiopath, text)
+
       melpath = './training_data/' + audiopath + '.npy'
-      np.save(melpath, mel.numpy())
+      np.save(melpath, mel.T)
 
       file_to_write.write(melpath + '|' + text + '\n')
       pbar.update(1)

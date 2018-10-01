@@ -5,18 +5,18 @@ import math
 from numpy import finfo
 
 import torch
-from distributed import DistributedDataParallel
+from .distributed import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
 
-from fp16_optimizer import FP16_Optimizer
+from .fp16_optimizer import FP16_Optimizer
 
-from model import Tacotron2
-from data_utils import TextMelLoader, TextMelCollate
-from loss_function import Tacotron2Loss
-from logger import Tacotron2Logger
-from hparams import create_hparams
+from .model import Tacotron2
+from .data_utils import TextMelLoader, TextMelCollate
+from .loss_function import Tacotron2Loss
+from .logger import Tacotron2Logger
+from .hparams import create_hparams
 
 
 def batchnorm_to_float(module):
