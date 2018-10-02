@@ -45,6 +45,7 @@ from torch.utils.data.sampler import Sampler
 from nnmnkwii import preprocessing as P
 from nnmnkwii.datasets import FileSourceDataset, FileDataSource
 
+import librosa
 import librosa.display
 
 from sklearn.model_selection import train_test_split
@@ -332,18 +333,20 @@ class PowerLoss(nn.Module):
         # student_stft = torch.stft(student_hat, frame_length=hparams.fft_size, hop=hparams.hop_size, window=window)
         # y_stft = torch.stft(y, frame_length=hparams.fft_size, hop=hparams.hop_size, window=window)
 
-        window = torch.hann_window(1200, periodic=True).to(device)
+        WIN_SIZE = 400
+        window1 = torch.hann_window(4 * WIN_SIZE, periodic=True).to(device)
+        window2 = torch.hann_window(WIN_SIZE, periodic=True).to(device)
         freq = int(3000 / (self.sample_rate * 0.5) * 1025)
         # we use fft size 2048 for frequence lower than 3000hz
-        student_stft = torch.stft(student_hat, frame_length=1200, hop=300, fft_size=2048, window=window)[:, :, :freq, :]
-        y_stft = torch.stft(y, frame_length=1200, hop=300, fft_size=2048, window=window)[:, :, :freq, :]
+        student_stft = torch.stft(student_hat, win_length=4 * WIN_SIZE, hop_length=300, n_fft=2048, window=window1)[:, :freq, :, :]
+        y_stft = torch.stft(y, win_length=4 * WIN_SIZE, hop_length=300, n_fft=2048, window=window1)[:, :freq, :, :]
         student_magnitude = self.get_magnitude(student_stft)
         y_magnitude = self.get_magnitude(y_stft)
         loss = torch.pow(torch.norm(torch.abs(student_magnitude) - torch.abs(y_magnitude), p=2, dim=1), 2)
 
         freq1 = int(3000 / (self.sample_rate * 0.5) * 257)
-        student_stft1 = torch.stft(student_hat, frame_length=1200, hop=300, fft_size=512, window=window)[:, :, freq1:, :]
-        y_stft1 = torch.stft(y, frame_length=1200, hop=300, fft_size=512, window=window)[:, :, freq1:, :]
+        student_stft1 = torch.stft(student_hat, win_length=WIN_SIZE, hop_length=300, n_fft=512, window=window2)[:, freq1:, :, :]
+        y_stft1 = torch.stft(y, win_length=WIN_SIZE, hop_length=300, n_fft=512, window=window2)[:, freq1:, :, :]
         student_magnitude1 = self.get_magnitude(student_stft1)
         y_magnitude1 = self.get_magnitude(y_stft1)
         loss1 = torch.pow(torch.norm(torch.abs(student_magnitude1) - torch.abs(y_magnitude1), p=2, dim=1), 2)
@@ -351,6 +354,7 @@ class PowerLoss(nn.Module):
         return torch.mean(loss, dim=1) + 10 * torch.mean(loss1, dim=1)
 
     def get_magnitude(self, stft_res):
+        print(stft_res.shape)
         real = stft_res[:, :, :, 0]
         im = stft_res[:, :, :, 1]
         return torch.sqrt(torch.pow(real, 2) +  torch.pow(im, 2))
