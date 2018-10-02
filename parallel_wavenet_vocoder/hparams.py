@@ -98,7 +98,7 @@ hparams = tf.contrib.training.HParams(
     # Loss
 
     # Training:
-    batch_size=2,
+    batch_size=4,
     adam_beta1=0.9,
     adam_beta2=0.999,
     adam_eps=1e-8,
@@ -121,8 +121,8 @@ hparams = tf.contrib.training.HParams(
 
     # Save
     # per-step intervals
-    checkpoint_interval=1000,
-    train_eval_interval=1000,
+    checkpoint_interval=500,
+    train_eval_interval=500,
     # per-epoch interval
     test_eval_epoch_interval=5,
     save_optimizer_state=True,

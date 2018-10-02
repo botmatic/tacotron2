@@ -354,7 +354,6 @@ class PowerLoss(nn.Module):
         return torch.mean(loss, dim=1) + 10 * torch.mean(loss1, dim=1)
 
     def get_magnitude(self, stft_res):
-        print(stft_res.shape)
         real = stft_res[:, :, :, 0]
         im = stft_res[:, :, :, 1]
         return torch.sqrt(torch.pow(real, 2) +  torch.pow(im, 2))
