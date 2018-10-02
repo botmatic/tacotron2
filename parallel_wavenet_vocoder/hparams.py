@@ -128,7 +128,7 @@ hparams = tf.contrib.training.HParams(
     save_optimizer_state=True,
 
     # Eval:
-    share_upsample_conv=False,
+    share_upsample_conv=True,
     # Student
     iaf_layers=[10, 10, 10, 10, 10, 10],
     iaf_stacks=[1, 1, 1, 1, 1, 1],
