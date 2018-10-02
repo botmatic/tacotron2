@@ -8,6 +8,15 @@ import librosa.display
 import numpy as np
 import torch
 
+from dotenv import load_dotenv
+load_dotenv()
+""" TACOTRON_CHECKPOINT_FOLDER = logs-Tacotron
+PARALLEL_WAVENET_CHECKPOINT_FOLDER = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/parallel_wavenet_vocoder/checkpoint
+WAVENET_OUTPUT_FOLDER = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/audio_out
+WAVENET_PRESET = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.json
+
+PORT = 7070 """
+
 from tacotron_wavenet import tacotron_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
 
 import uuid
@@ -21,13 +30,8 @@ class dotdict(dict):
 
 app = Flask(__name__)
 
-
-TACOTRON_CHECKPOINT = './output/checkpoint_15500'
-PARALLEL_WN_CHECKPOINT_DIR = './parallel_wavenet_vocoder/checkpoint'
-SEQUENTIAL_WN_CHECKPOINT_DIR = './parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.pth'
-
 tactron_hparams = create_hparams()
-tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
+tacotron_m = tacotron_model(tactron_hparams, os.environ['TACOTRON_CHECKPOINT'])
 
 @app.route("/synthesize", methods=["POST"])
 def synthetize():
@@ -52,12 +56,12 @@ def synthetize():
     # Wavenet model loading
     checkpoint_number = request.form["checkpoint"]
     checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '.pth'
-    checkpoint_path = os.path.join(PARALLEL_WN_CHECKPOINT_DIR, checkpoint_filename)
+    checkpoint_path = os.path.join(os.environ['PARALLEL_WAVENET_CHECKPOINT_FOLDER'], checkpoint_filename)
 
     wavenet_type = "student"
     if request.form["engine"] == "sequential":
         wavenet_type = "teacher"
-        checkpoint_path = SEQUENTIAL_WN_CHECKPOINT_DIR
+        checkpoint_path = os.environ['SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER']
 
     # Waveform generation
     waveform = parallel_wavenet_generate(
@@ -189,5 +193,5 @@ def train_student():
     return {'success': True} 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7070)
+    app.run(host='0.0.0.0', port=os.environ['PORT'])
 

@@ -11,6 +11,7 @@ text
 ljspeech/
 .DS_Store
 .vscode
+.env
 
 # my
 log-*/
