@@ -347,7 +347,7 @@ class PowerLoss(nn.Module):
 
         freq1 = int(3000 / (self.sample_rate * 0.5) * 257)
         student_stft1 = torch.stft(student_hat, win_length=window2.size(0), hop_length=300, n_fft=512, window=window2)[:, freq1:, :, :]
-        y_stft1 = torch.stft(y, win_length=window.size(0), hop_length=300, n_fft=512, window=window2)[:, freq1:, :, :]
+        y_stft1 = torch.stft(y, win_length=window2.size(0), hop_length=300, n_fft=512, window=window2)[:, freq1:, :, :]
         student_magnitude1 = self.get_magnitude(student_stft1)
         y_magnitude1 = self.get_magnitude(y_stft1)
         loss1 = torch.pow(torch.norm(torch.abs(student_magnitude1) - torch.abs(y_magnitude1), p=2, dim=1), 2)
