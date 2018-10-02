@@ -335,7 +335,7 @@ class PowerLoss(nn.Module):
 
         WIN_SIZE = 1200
         window1 = torch.hann_window(WIN_SIZE, periodic=True).to(device)
-        window_pad = (WIN_SIZE - 512) / 2
+        window_pad = int((WIN_SIZE - 512) / 2)
         window2 = window1[window_pad:window_pad+512]
         freq = int(3000 / (self.sample_rate * 0.5) * 1025)
         # we use fft size 2048 for frequence lower than 3000hz
