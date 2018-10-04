@@ -1,5 +1,5 @@
 flask
 python-dotenv
-# pytorch==0.4.1
+torch==0.4.1
 tensorflow-gpu==1.6.0
 tensorboardX==1.1
