@@ -2,3 +2,7 @@ __pycache__
 .ipynb_checkpoints
 audio_out
 demo.wav
+datasets/**/*
+output/**/*
+parallel_wavenet_vocoder/checkpoint/**/*
+parallel_wavenet_vocoder/training_data/**/*
