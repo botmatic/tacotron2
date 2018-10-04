@@ -54,7 +54,7 @@ def predict_spectrogram(tacotron_model, text):
   return infer(tacotron_model, text)
 
 
-def parallel_wavenet_generate(mels, checkpoint_path, model_type="student"):
+def parallel_wavenet_generate(mels, checkpoint_path, preset, model_type="student"):
   """
   Waveform prediction with mels as conditionnal features
 
@@ -69,7 +69,7 @@ def parallel_wavenet_generate(mels, checkpoint_path, model_type="student"):
   print("Parallel wavenet generate")
   # Waveform synthesis by wavenet
   # Setup WaveNet vocoder hparams
-  with open('./parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.json') as f:
+  with open(preset) as f:
       wn_hparams.parse_json(f.read())
 
   # Select the model to use

@@ -9,13 +9,30 @@ import numpy as np
 import torch
 
 from dotenv import load_dotenv
-load_dotenv()
-""" TACOTRON_CHECKPOINT_FOLDER = logs-Tacotron
-PARALLEL_WAVENET_CHECKPOINT_FOLDER = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/parallel_wavenet_vocoder/checkpoint
-WAVENET_OUTPUT_FOLDER = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/audio_out
-WAVENET_PRESET = /Users/gaelphilippe/IdeaProjects/Tacotron_packaged/parallel_wavenet_vocoder/20180510_mixture_lj_checkpoint_step000320000_ema.json
 
-PORT = 7070 """
+APP_ROOT = os.path.dirname(__file__)
+dotenv_path = os.path.join(APP_ROOT, '.env')
+load_dotenv(dotenv_path, verbose=True)
+
+TACOTRON_CHECKPOINT = "./output/checkpoint_15500"
+PARALLEL_WAVENET_CHECKPOINT_FOLDER = "./parallel_wavenet_vocoder/checkpoint"
+SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER = "./parallel_wavenet_vocoder/checkpoint/20180510_mixture_lj_checkpoint_step000320000_ema.pth"
+
+WAVENET_OUTPUT_FOLDER = "./audio_out"
+WAVENET_PRESET = "./parallel_wavenet_vocoder/presets/ljspeech_gaussian.json"
+
+PORT = 7070
+
+
+# os.environ.putenv("TACOTRON_CHECKPOINT", "./output/checkpoint_15500")
+# os.environ.putenv("PARALLEL_WAVENET_CHECKPOINT_FOLDER", "./parallel_wavenet_vocoder/checkpoint")
+# os.environ.putenv("SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER", "./parallel_wavenet_vocoder/checkpoint/20180510_mixture_lj_checkpoint_step000320000_ema.pth")
+
+# os.environ.putenv("WAVENET_OUTPUT_FOLDER", "./audio_out")
+# os.environ.putenv("WAVENET_PRESET", "./parallel_wavenet_vocoder/presets/ljspeech_gaussian.json")
+
+PORT = 7070
+
 
 from tacotron_wavenet import tacotron_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
 
@@ -31,7 +48,7 @@ class dotdict(dict):
 app = Flask(__name__)
 
 tactron_hparams = create_hparams()
-tacotron_m = tacotron_model(tactron_hparams, os.environ['TACOTRON_CHECKPOINT'])
+tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
 
 @app.route("/synthesize", methods=["POST"])
 def synthetize():
@@ -56,16 +73,16 @@ def synthetize():
     # Wavenet model loading
     checkpoint_number = request.form["checkpoint"]
     checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '.pth'
-    checkpoint_path = os.path.join(os.environ['PARALLEL_WAVENET_CHECKPOINT_FOLDER'], checkpoint_filename)
+    checkpoint_path = os.path.join(PARALLEL_WAVENET_CHECKPOINT_FOLDER, checkpoint_filename)
 
     wavenet_type = "student"
     if request.form["engine"] == "sequential":
         wavenet_type = "teacher"
-        checkpoint_path = os.environ['SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER']
+        checkpoint_path = SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER
 
     # Waveform generation
     waveform = parallel_wavenet_generate(
-        (text, mels), checkpoint_path, wavenet_type)
+        (text, mels), checkpoint_path, WAVENET_PRESET, wavenet_type)
     from parallel_wavenet_vocoder.hparams import hparams
 
     # write to file
