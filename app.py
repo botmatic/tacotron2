@@ -34,7 +34,7 @@ PORT = 7070
 PORT = 7070
 
 
-from tacotron_wavenet import tacotron_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
+from tacotron_wavenet import tacotron_model, wavenet_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
 
 import uuid
 
@@ -46,9 +46,18 @@ class dotdict(dict):
      __delattr__ = dict.__delitem__
 
 app = Flask(__name__)
+app.use_x_sendfile = True
 
 tactron_hparams = create_hparams()
 tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
+tacotron_m.share_memory()
+wavenet_m = wavenet_model('./parallel_wavenet_vocoder/checkpoint/checkpoint_step000860000.pth',
+'./parallel_wavenet_vocoder/presets/ljspeech_gaussian.json', 'student')
+wavenet_m.share_memory()
+
+@app.route("/ok", methods=["POST"])
+def ok():
+    return "OK"
 
 @app.route("/synthesize", methods=["POST"])
 def synthetize():
@@ -71,18 +80,18 @@ def synthetize():
         "distributed_run=False,mask_padding=False"), mels)
 
     # Wavenet model loading
-    checkpoint_number = request.form["checkpoint"]
-    checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '.pth'
-    checkpoint_path = os.path.join(PARALLEL_WAVENET_CHECKPOINT_FOLDER, checkpoint_filename)
+    # checkpoint_number = request.form["checkpoint"]
+    # checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '_ema.pth'
+    # checkpoint_path = os.path.join(PARALLEL_WAVENET_CHECKPOINT_FOLDER, checkpoint_filename)
 
-    wavenet_type = "student"
-    if request.form["engine"] == "sequential":
-        wavenet_type = "teacher"
-        checkpoint_path = SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER
+    # wavenet_type = "student"
+    # if request.form["engine"] == "sequential":
+    #     wavenet_type = "teacher"
+    #     checkpoint_path = SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER
 
     # Waveform generation
     waveform = parallel_wavenet_generate(
-        (text, mels), checkpoint_path, WAVENET_PRESET, wavenet_type)
+        (text, mels), wavenet_m)
     from parallel_wavenet_vocoder.hparams import hparams
 
     # write to file
@@ -98,9 +107,11 @@ def synthetize():
     wav_bytes = io.BytesIO(wav_file.read())
     wav_file.close()
 
-    return send_file(wav_bytes,
+    res = send_file(wav_bytes,
                     attachment_filename=filename,
                     mimetype='audio/wav')
+    print(res)
+    return res
 
 
 def _load_ljspeech():

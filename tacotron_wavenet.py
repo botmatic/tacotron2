@@ -53,22 +53,7 @@ def predict_spectrogram(tacotron_model, text):
 
   return infer(tacotron_model, text)
 
-
-def parallel_wavenet_generate(mels, checkpoint_path, preset, model_type="student"):
-  """
-  Waveform prediction with mels as conditionnal features
-
-  ARGS:
-    mels: ((string, numpy.NDarray) A tuple containing the text and the melspectrogram to synthetise
-    checkpoint_path: (string) Path to the wavenet checkpoint to use
-    model_type: (string) ["student"|"teacher"] which vocoder to use
-
-  RETURNS:
-    (numpy.NDarray) The synthsized waveform
-  """
-  print("Parallel wavenet generate")
-  # Waveform synthesis by wavenet
-  # Setup WaveNet vocoder hparams
+def wavenet_model(checkpoint_path, preset, model_type="student"):
   with open(preset) as f:
       wn_hparams.parse_json(f.read())
 
@@ -82,6 +67,23 @@ def parallel_wavenet_generate(mels, checkpoint_path, preset, model_type="student
   checkpoint = torch.load(checkpoint_path, map_location=device)
   state_dict = checkpoint["state_dict"]
   model.load_state_dict(state_dict)
+
+  return model
+
+
+def parallel_wavenet_generate(mels, model, model_type="student"):
+  """
+  Waveform prediction with mels as conditionnal features
+
+  ARGS:
+    mels: ((string, numpy.NDarray) A tuple containing the text and the melspectrogram to synthetise
+    checkpoint_path: (string) Path to the wavenet checkpoint to use
+    model_type: (string) ["student"|"teacher"] which vocoder to use
+
+  RETURNS:
+    (numpy.NDarray) The synthsized waveform
+  """
+  print("Parallel wavenet generate")
 
   text = mels[0]
   c = mels[1]

@@ -71,7 +71,7 @@ def wavegen(model, c=None, g=None, fast=False, tqdm=tqdm):
     g = _to_numpy(g)
 
     model.eval()
-    model.make_generation_fast_()
+    # model.make_generation_fast_()
 
     assert c is not None
     # (Tc, D)
