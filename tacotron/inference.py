@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from .hparams import create_hparams
-from model import Tacotron2
+from .model import Tacotron2
 from layers import TacotronSTFT
 from audio_processing import griffin_lim
 from .train import load_model
