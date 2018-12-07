@@ -80,9 +80,10 @@ def synthetize():
     
     (text, mels) = predict_spectrogram(tacotron_m, sentence)
 
-#    mels = nvidia_to_mama_mel(create_hparams(
-#        "distributed_run=False,mask_padding=False"), mels)
-    mels = mels.detach().cpu().numpy().squeeze()
+   mels = nvidia_to_mama_mel(create_hparams(
+       "distributed_run=False,mask_padding=False"), mels, False)
+    # mels = mels.detach().cpu().numpy().squeeze()
+
     # Wavenet model loading
     # checkpoint_number = request.form["checkpoint"]
     # checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '_ema.pth'
