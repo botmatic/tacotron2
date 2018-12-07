@@ -675,6 +675,7 @@ def __train_step(device, phase, epoch, global_step, global_test_step,
 
     dist = torch.distributions.normal.Normal(loc=0., scale=1.)
     z = dist.sample(x.size())
+    print("new student input with gaussian noise of size {}".format(x.size()))
 
     # Apply model: Run the model in regular eval mode
     # NOTE: softmax is handled in F.cross_entrypy_loss
@@ -694,12 +695,18 @@ def __train_step(device, phase, epoch, global_step, global_test_step,
 
     # calculate loss
     kl_loss = torch.nn.parallel.data_parallel(kl_criterion, (teacher_output, student_mu, student_scale, student_log_scale))
+    print("KLOSS intermediaire {}".format(kl_loss))
     kl_loss = ((kl_loss * mask).sum()) / mask.sum()
+    print("KLOSS {}".format(kl_loss))
 
     power_loss = torch.nn.parallel.data_parallel(pl_criterion, (student_hat, y))
+    print("PLOSS intermediaire {}".format(power_loss))
     power_loss = torch.mean(power_loss)
+    print("PLOSS {}".format(power_loss))
 
     loss = kl_loss + power_loss
+
+    print("LOSS {}".format(loss))
 
     if train and step > 0 and step % hparams.checkpoint_interval == 0:
         save_states(step, writer, teacher_output, student_hat, y, input_lengths, checkpoint_dir)
