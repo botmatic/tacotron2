@@ -20,6 +20,10 @@ from parallel_wavenet_vocoder.train import build_model as build_teacher_model
 from parallel_wavenet_vocoder.synthesis import wavegen as teacher_wavegen
 from parallel_wavenet_vocoder.hparams import hparams as wn_hparams
 
+import glow_old
+
+MAX_WAV_VALUE = 32768.0
+
 ## TORCH SETUP
 torch.set_num_threads(os.cpu_count())
 use_cuda = torch.cuda.is_available()
@@ -104,6 +108,29 @@ def parallel_wavenet_generate(mels, model, model_type="student"):
     waveform = teacher_wavegen(model, c=c, fast=True, tqdm=tqdm)
 
   return waveform
+
+
+def waveglow_model(checkpoint_path):
+  waveglow = torch.load(checkpoint_path)["model"]
+  waveglow = waveglow.remove_weightnorm(waveglow)
+  waveglow.to(device).eval()
+
+  return waveglow
+
+
+def waveglow_wavegen(mels, model):
+  text = mels[0]
+  c = torch.from_numpy(mels[1]).to(device)
+  c = torch.autograd.Variable(c)
+  c = torch.unsqueeze(c, 0)
+
+  with torch.no_grad():
+    # TODO pass sigma as param instead of hard coded value
+      audio = MAX_WAV_VALUE*model.infer(c, sigma=0.6)[0]
+  audio = audio.cpu().numpy()
+  audio = audio.astype('int16')
+  
+  return audio
 
 
 def nvidia_to_mama_mel(hparams, input_mel):

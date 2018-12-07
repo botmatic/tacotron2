@@ -34,7 +34,7 @@ PORT = 7070
 PORT = 7070
 
 
-from tacotron_wavenet import tacotron_model, wavenet_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel
+from tacotron_wavenet import tacotron_model, wavenet_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel, waveglow_model, waveglow_wavegen
 
 import uuid
 
@@ -54,6 +54,8 @@ tacotron_m.share_memory()
 wavenet_m = wavenet_model('./parallel_wavenet_vocoder/checkpoint/checkpoint_step000860000.pth',
 './parallel_wavenet_vocoder/presets/ljspeech_gaussian.json', 'student')
 wavenet_m.share_memory()
+waveglow_m = waveglow_model('./waveglow/checkpoints/waveglow.pt')
+waveglow_m.share_memory()
 
 @app.route("/ok", methods=["POST"])
 def ok():
@@ -73,6 +75,7 @@ def synthetize():
 
     # Mel spectrogram generation
     sentence = request.form["text"]
+    wave_generator = request.form["engine"]
     
     (text, mels) = predict_spectrogram(tacotron_m, sentence)
 
@@ -89,10 +92,17 @@ def synthetize():
     #     wavenet_type = "teacher"
     #     checkpoint_path = SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER
 
-    # Waveform generation
-    waveform = parallel_wavenet_generate(
-        (text, mels), wavenet_m)
-    from parallel_wavenet_vocoder.hparams import hparams
+    if (wave_generator == "wavenet"):
+        # Waveform generation
+        waveform = parallel_wavenet_generate(
+            (text, mels), wavenet_m)
+        from parallel_wavenet_vocoder.hparams import hparams
+        sample_rate = hparams.sample_rate
+    else:
+        waveform = waveglow_wavegen(
+            (text, mels), waveglow_m
+        )
+        sample_rate = 22050 # TODO This should be coming from params
 
     # write to file
     # As of now, The only way I know of to get WAV file, is to
@@ -101,7 +111,7 @@ def synthetize():
     filepath = os.path.join('.', 'audio_out', filename)
 
     import librosa
-    librosa.output.write_wav(filepath, waveform, sr=hparams.sample_rate)
+    librosa.output.write_wav(filepath, waveform, sr=sample_rate)
     
     wav_file = open(filepath, "rb")
     wav_bytes = io.BytesIO(wav_file.read())
