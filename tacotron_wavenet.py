@@ -140,7 +140,7 @@ def waveglow_wavegen(mels, model):
   return audio
 
 
-def nvidia_to_mama_mel(hparams, input_mel):
+def nvidia_to_mama_mel(hparams, input_mel, renorm=True):
   """Nvidia's Tacotron and Mamah's have different mel outputs,
   Attempts to convert form Nvidia to Mamah's
   ARGS:
@@ -189,9 +189,10 @@ def nvidia_to_mama_mel(hparams, input_mel):
 
   mel = mel.squeeze()
 
-  # # B.2 - Correct dB value scale
-  mel = np.interp(mel, (-12, 2), (-100, 0))
-  # # B.3 - Normalize values (between 0 and 4)
-  mel = audio_utils._normalize(hparams, mel)
+  if renorm == True:
+    # # B.2 - Correct dB value scale
+    mel = np.interp(mel, (-12, 2), (-100, 0))
+    # # B.3 - Normalize values (between 0 and 4)
+    mel = audio_utils._normalize(hparams, mel)
 
   return mel
