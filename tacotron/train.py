@@ -80,6 +80,7 @@ def load_model(hparams):
     has_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if has_cuda else "cpu")
 
+    print(hparams)
     model = Tacotron2(hparams).to(device)
     if hparams.fp16_run:
         model = batchnorm_to_float(model.half())

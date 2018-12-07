@@ -115,14 +115,21 @@ def waveglow_model(checkpoint_path):
   waveglow = waveglow.remove_weightnorm(waveglow)
   waveglow.to(device).eval()
 
+  waveglow.half()
+  for k in waveglow.convinv:
+    k.float()
+
   return waveglow
 
 
 def waveglow_wavegen(mels, model):
   text = mels[0]
-  c = torch.from_numpy(mels[1]).to(device)
+  c = torch.from_numpy(mels[1]).type(torch.FloatTensor)
   c = torch.autograd.Variable(c)
   c = torch.unsqueeze(c, 0)
+
+  c = c.to(device)
+  c = c.half()
 
   with torch.no_grad():
     # TODO pass sigma as param instead of hard coded value

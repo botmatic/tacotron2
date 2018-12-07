@@ -5,6 +5,7 @@ import io
 from tacotron.hparams import create_hparams
 from tacotron.inference import infer, model
 import librosa.display
+import scipy.io.wavfile as wavfile
 import numpy as np
 import torch
 
@@ -79,9 +80,9 @@ def synthetize():
     
     (text, mels) = predict_spectrogram(tacotron_m, sentence)
 
-    mels = nvidia_to_mama_mel(create_hparams(
-        "distributed_run=False,mask_padding=False"), mels)
-
+#    mels = nvidia_to_mama_mel(create_hparams(
+#        "distributed_run=False,mask_padding=False"), mels)
+    mels = mels.detach().cpu().numpy().squeeze()
     # Wavenet model loading
     # checkpoint_number = request.form["checkpoint"]
     # checkpoint_filename = 'checkpoint_step' + '{:0>9}'.format(checkpoint_number) + '_ema.pth'
@@ -110,8 +111,9 @@ def synthetize():
     filename = str(uuid.uuid4()) + '.wav'
     filepath = os.path.join('.', 'audio_out', filename)
 
-    import librosa
-    librosa.output.write_wav(filepath, waveform, sr=sample_rate)
+#    import librosa
+#    librosa.output.write_wav(filepath, waveform, sr=sample_rate)
+    wavfile.write(filepath, sample_rate, waveform)
     
     wav_file = open(filepath, "rb")
     wav_bytes = io.BytesIO(wav_file.read())

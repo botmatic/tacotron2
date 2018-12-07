@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import with_statement, print_function, absolute_import
 
+import sys
+
 import math
 import numpy as np
 
@@ -210,6 +212,7 @@ class Student(nn.Module):
             Tensor: output, shape B x out_channels x T
         """
         B, _, T = x.size()
+        print("student forward: input {} {}, min/max: {}/{}".format(x.size(), x.type(), x.min(), x.max()))
 
         if g is not None:
             if self.embed_speakers is not None:
@@ -238,10 +241,12 @@ class Student(nn.Module):
         for each_iaf_layer in self.iaf_layers:
             # first conv
             output = each_iaf_layer[0](x)
+            print("first conv output min/max: {}/{}".format(output.min(), output.max()))
             # residual layer
             skips = None
-            for residual_layer in each_iaf_layer[1]:
+            for idx, residual_layer in enumerate(each_iaf_layer[1]):
                 output, h = residual_layer(output, c, g_bct)
+                print("residual layer {} output min/max: {}/{}".format(idx, h.min(), h.max()))
                 if skips is None:
                     skips = h
                 else:
@@ -250,9 +255,13 @@ class Student(nn.Module):
                         skips *= math.sqrt(0.5)
             # last layer
             output = skips
-            for layer in each_iaf_layer[2]:
+            
+            for idx, layer in enumerate(each_iaf_layer[2]):
+                print("last layer {} input min/max: {}/{}".format(idx, output.min(), output.max()))
                 output = layer(output)
+
             mu, log_scale = torch.unsqueeze(output[:, 0, :], dim=1), torch.unsqueeze(output[:, 1, :], dim=1)
+            print("mu: {}, log_scale {}".format(mu, log_scale))
             # log_scale = torch.clamp(log_scale, min=log_scale_min)
             scale = torch.exp(log_scale)
 
@@ -270,6 +279,10 @@ class Student(nn.Module):
         scale_tot = torch.squeeze(scale_tot, dim=1)
 
         x = torch.clamp(x, min=-1.0, max=1.0)
+
+        if math.isnan(mu_tot.min()) or math.isnan(scale_tot.min()) or math.isnan(log_scale_tot.min()):
+            sys.exit("The model exploded.")
+
         return x, mu_tot, scale_tot, log_scale_tot
 
     def make_generation_fast_(self):
