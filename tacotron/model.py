@@ -2,9 +2,9 @@ import torch
 from torch.autograd import Variable
 from torch import nn
 from torch.nn import functional as F
-from layers import ConvNorm, LinearNorm
-from utils import to_gpu, get_mask_from_lengths
-from fp16_optimizer import fp32_to_fp16, fp16_to_fp32
+from .layers import ConvNorm, LinearNorm
+from .utils import to_gpu, get_mask_from_lengths
+from .fp16_optimizer import fp32_to_fp16, fp16_to_fp32
 
 from tqdm import tqdm
 
