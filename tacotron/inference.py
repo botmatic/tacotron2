@@ -3,10 +3,10 @@ import torch
 
 from .hparams import create_hparams
 from .model import Tacotron2
-from layers import TacotronSTFT
-from audio_processing import griffin_lim
+from .layers import TacotronSTFT
+from .audio_processing import griffin_lim
 from .train import load_model
-from text import text_to_sequence
+from .text import text_to_sequence
 
 import matplotlib
 matplotlib.use("Agg")
