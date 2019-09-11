@@ -38,6 +38,7 @@ PORT = 7070
 from tacotron_wavenet import tacotron_model, wavenet_model, predict_spectrogram, parallel_wavenet_generate, nvidia_to_mama_mel, waveglow_model, waveglow_wavegen
 
 import uuid
+import time
 
 # Utility class to have dot notation for dict
 class dotdict(dict):
@@ -52,10 +53,10 @@ app.use_x_sendfile = True
 tactron_hparams = create_hparams()
 tacotron_m = tacotron_model(tactron_hparams, TACOTRON_CHECKPOINT)
 tacotron_m.share_memory()
-wavenet_m = wavenet_model('./parallel_wavenet_vocoder/checkpoint/checkpoint_step000860000.pth',
-'./parallel_wavenet_vocoder/presets/ljspeech_gaussian.json', 'student')
-wavenet_m.share_memory()
-waveglow_m = waveglow_model('./waveglow/checkpoints/waveglow.pt')
+#wavenet_m = wavenet_model('./parallel_wavenet_vocoder/checkpoint/checkpoint_step000860000.pth',
+#'./parallel_wavenet_vocoder/presets/ljspeech_gaussian.json', 'student')
+#wavenet_m.share_memory()
+waveglow_m = waveglow_model('./waveglow/checkpoints/waveglow_800000.pt')
 waveglow_m.share_memory()
 
 @app.route("/ok", methods=["POST"])
@@ -77,10 +78,15 @@ def synthetize():
     # Mel spectrogram generation
     sentence = request.form["text"]
     wave_generator = request.form["engine"]
-    
+
+    start = time.perf_counter()
+
     (text, mels) = predict_spectrogram(tacotron_m, sentence)
 
-   mels = nvidia_to_mama_mel(create_hparams(
+    end = time.perf_counter()
+    print("Mel Spectrogram generation took " + str((end - start) * 1000) + " ms")
+
+    mels = nvidia_to_mama_mel(create_hparams(
        "distributed_run=False,mask_padding=False"), mels, False)
     # mels = mels.detach().cpu().numpy().squeeze()
 
@@ -93,6 +99,7 @@ def synthetize():
     # if request.form["engine"] == "sequential":
     #     wavenet_type = "teacher"
     #     checkpoint_path = SEQUENTIAL_WAVENET_CHECKPOINT_FOLDER
+    start = time.perf_counter()
 
     if (wave_generator == "wavenet"):
         # Waveform generation
@@ -106,6 +113,8 @@ def synthetize():
         )
         sample_rate = 22050 # TODO This should be coming from params
 
+    end = time.perf_counter()
+    print("Waveform generation took " + str((end - start) * 1000) + " ms")
     # write to file
     # As of now, The only way I know of to get WAV file, is to
     # write it to disk, then read it again

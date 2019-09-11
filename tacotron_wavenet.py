@@ -181,7 +181,8 @@ def nvidia_to_mama_mel(hparams, input_mel, renorm=True):
 
   taco_stft_other = TacotronSTFT(
       filter_length, hop_length, win_length,
-      sampling_rate=sampling_rate, mel_fmin=mel_fmin, mel_fmax=mel_fmax)
+      sampling_rate=sampling_rate)
+  #    sampling_rate=sampling_rate, mel_fmin=mel_fmin, mel_fmax=mel_fmax)
 
   # B- Project from Spectrogram to r9y9's WaveNet Mel-Spectrogram
   mel = taco_stft_other.spectral_normalize(
